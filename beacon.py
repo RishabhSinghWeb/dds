@@ -57,7 +57,7 @@ class Torrent:
 
 WEBSITE_PORT = 9000
 FLOOD_TIMER = 3 #28 # not 30 because 30*2=60 by that time peers already assume us offline
-PEER_OFFLINE_TIME = 10 #60
+PEER_OFFLINE_TIME = 50 #60
 CONCENSUS_INTERVAL = 15 #600
 SYNC_INTERVAL = 12 #60
 
@@ -309,7 +309,7 @@ while True:
                         host,port = addr
                         st.append({'host':host,'port':port,'stat':stat})
 
-                    client.send((f"HTTP/1.1 200 OK\nContent-Type: html\nAccess-Control-Allow-Origin: *\n\r\n\r\n"+json.dumps({
+                    client.send((f"HTTP/1.1 200 OK\nContent-Type: application/xml\nAccess-Control-Allow-Origin: *\n\r\n\r\n"+json.dumps({
                             'targets':targets,
                             'host':host,
                             'port':port,
