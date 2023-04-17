@@ -1,5 +1,9 @@
 import socket, json, time, select, sys, uuid, hashlib, random
 from qbittorrent import Client
+import bencoding, binascii, hashlib
+from io import BytesIO
+import os, platform, subprocess, psutil, cpuinfo#netifaces
+
 # import stun
 # nat_type, external_ip, external_port = stun.get_ip_info()
 # print(nat_type, external_ip, external_port)
@@ -7,7 +11,7 @@ from qbittorrent import Client
 
 qb = Client("http://127.0.0.1:5555/")
 
-torrents = {}
+torrents = {}  # torrents for each collection, like collection_id: [(torrent_file_name, download_status, infohash)]
 
 # DIR = "../collection_files/"
 DIR = "D:/collection_files/"
@@ -18,10 +22,16 @@ for collection in collection_files:
     try:
         with open(path, "r") as f:
             j = json.loads(f.read())
-            temp = []
-            for i in j['torrents']:
-                temp.append((i,False))
-            torrents[j['id']] = temp
+            torrent_files = []
+            for torrent_file_name in j['torrents']:
+                try:
+                    with open(DIR+torrent_file_name, "rb") as f:
+                        data = bencoding.bdecode(f.read())
+                    infohash = hashlib.sha1(bencoding.bencode(data[b'info'])).hexdigest()
+                except:
+                    infohash = None
+                torrent_files.append((torrent_file_name,False,infohash))  
+            torrents[j['id']] = torrent_files
     except:
         print("can't open", path)
 
@@ -80,6 +90,7 @@ except:
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 # sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 sock.bind((host, port))
+sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 sock2 = socket.socket()
 inputs = [sock]
 print('Listening on udp %s:%s' % (host, port))
@@ -87,6 +98,7 @@ print('Listening on udp %s:%s' % (host, port))
 
 try:
     sock2.bind((host, WEBSITE_PORT))
+    sock2.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock2.listen(5)
     print('Listening on tcp %s:%s' % (host, WEBSITE_PORT))
     inputs.append(sock2)
@@ -190,7 +202,8 @@ while True:
     for t_id in t_stats:
         counter = {}
         x= t_stats[t_id]
-        for name,status in x:
+        # print(x)
+        for name,status,infohash in x:
     #         i = str(i)
             if name not in counter:
     #             print(0,name)
@@ -309,19 +322,72 @@ while True:
                         host,port = addr
                         st.append({'host':host,'port':port,'stat':stat})
 
-                    client.send((f"HTTP/1.1 200 OK\nContent-Type: application/xml\nAccess-Control-Allow-Origin: *\n\r\n\r\n"+json.dumps({
+
+
+                    kb = float(1024)
+                    mb = float(kb ** 2)
+                    gb = float(kb ** 3)
+
+                    memTotal = int(psutil.virtual_memory()[0]/gb)
+                    memFree = int(psutil.virtual_memory()[1]/gb)
+                    memUsed = int(psutil.virtual_memory()[3]/gb)
+                    memPercent = int(memUsed/memTotal*100)
+                    storageTotal = int(psutil.disk_usage('/')[0]/gb)
+                    storageUsed = int(psutil.disk_usage('/')[1]/gb)
+                    storageFree = int(psutil.disk_usage('/')[2]/gb)
+                    storagePercent = int(storageUsed/storageTotal*100)
+                    info = cpuinfo.get_cpu_info()['brand_raw']
+                    core = os.cpu_count()
+                    host = socket.gethostname()
+                    client.send((f"HTTP/1.1 200 OK\nContent-Type: application/json\nAccess-Control-Allow-Origin: *\n\r\n\r\n"+json.dumps({
                             'targets':targets,
                             'host':host,
                             'port':port,
                             'c_stats':c_stats,
                             'stats':st,
                             'peers':peers,
-                            'collection_files': collection_files
+                            'collection_files': collection_files,
+
+                            "proc_total" : len(psutil.pids()),
+                            "load_avg_unit": "minutes",
+                            "load_avg_1": round(psutil.getloadavg()[0],2),
+                            "load_avg_5": round(psutil.getloadavg()[1],2),
+                            "load_avg_15": round(psutil.getloadavg()[2],2),
+
+                            # ---------- System Info ----------
+                            "hostname":host,
+                            "system":  platform.system(),
+                            "machine": platform.machine(),
+                            "kernel":  platform.release(),
+                            "compiler":platform.python_compiler(),
+                            "CPU":     info, 
+                            "CPU_core":core, #"(Core)")
+                            "memory":   memTotal,
+                            "disk":     storageTotal,
+
+                            "CPU_percent": psutil.cpu_percent(1),
+                            # unit = GiB
+                            "RAM_used": memUsed,
+                            "RAM_total": memTotal,
+                            "RAM_percent": memPercent,
+                            "disk_used": storageUsed,
+                            "disk_total": storageTotal,
+                            "disk_percent": storagePercent,
+
+                            #     active = netifaces.gateways()['default'][netifaces.AF_INET][1]
+                            "speed" : psutil.net_io_counters(pernic=False),
+                            "sent" : speed[0],
+                            "psend" : round(speed[2]/kb, 2),
+                            "precv" : round(speed[3]/kb, 2),
+
+                            "packet_send"      : psend,
+                            "packet_receive"   : precv,
+                            # "KiB/s")
                         })).encode())
                     client.close()
                     inputs.remove(client)
                 else:
-                    client.send((f"HTTP/1.1 200 OK\nContent-Type: html\nAccess-Control-Allow-Origin: *\n\r\n\r\n"+json.dumps({
+                    client.send((f"HTTP/1.1 200 OK\nContent-Type: application/json\nAccess-Control-Allow-Origin: *\n\r\n\r\n"+json.dumps({
                             'torrents':qb.torrents(),
                             # 'stats':stats,
                             'c_stats':c_stats,
