@@ -1,0 +1,3 @@
+max_allowed_storage = 1000  # in MB
+max_allowed_connections = 200  
+volunteer_for_global_archives = True  # helps important critical internet archives to use the network 

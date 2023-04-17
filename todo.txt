@@ -1,0 +1,71 @@
+
+___________________________________________________________________________
+POC
+
+load optimisation to reduce total storage, by deleting and not downloading highly redundant files in collec
+	get stats from all other beacons how many torrents they have downloaded
+	target 
+
+
+3 peer 100%
+
+
+
+3 40%
+
+
+
+
+___________________________________________________________________________
+Future Scopes
+
+longest alive beacon
+
+
+
+long term plan - not implemented for POC
+longest active beacons are most stable beacons
+ideally the beacons store critical/rare/small files
+while newly active beacons will handle more of the bandwidth load
+
+
+
+___________________________________________________________________________
+Already done
+
+finding beacons
+
+
+how beacons find each other?
+1. all seeds and peers of beacon.torrent are considered as beacons
+2. collection file contains beacon's addresses
+3. ask known beacons for more beacons
+
+
+keep-alive 5 minutes
+
+how beacons connect?
+udp
+
+how data is stored
+1. no database is required
+2. collection file
+
+___________________________________________________________________________
+
+Swarm
+Swarm is to get a situational overview, search for objects, monitor the environment, or establish a communication network. Coordinated motion moves the swarm of robots in a formation. The formation can have a well-defined shape, e.g., a line, or be arbitrary as in flocking.
+swarm intelligence in natural systems include ant colonies, bee colonies, bird flocking, hawks hunting, animal herding, bacterial growth, fish schooling and microbial intelligence.
+A Swarm is a configuration of tens of thousands of individuals that have chosen their own will to converge on a common goal. Swarm Intelligence is the Complex Collective, Self-Organized, Coordinated, Flexible and Robust Behaviour of a group following the simple rules.
+Advantages:
+1) Flexible: The colony respond to internal disturbances and external challenges.
+2) Robust: Tasks are completed even if some agents fail.
+3) Scalable: From a few agents to millions
+4) Decentralized: There is no central control in the colony.
+5) Self-organized: The solutions are emergent rather than pre-defined.
+6) Adaptation: The swarm system can not only adjust to predetermined stimuli but also to new stimuli.
+7) Speed: Changes in the network can be propagated very fast.
+8) Modularity: Agents act independently of other network layers.
+9) Parallelism: Agents' operations are inherently parallel. 
+
+
