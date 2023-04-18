@@ -146,6 +146,7 @@ collections = [{"id":1, "files":[1,2,3,4,5]}]
 # Main Loop
 while True:
     now = int(time.time())
+    # time.sleep(0.1)
     # print(peers)
     # Clean up peers
     for peer in peers:
