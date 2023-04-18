@@ -332,21 +332,32 @@ while True:
                     mb = float(kb ** 2)
                     gb = float(kb ** 3)
 
-                    memTotal = int(psutil.virtual_memory()[0]/gb)
-                    memFree = int(psutil.virtual_memory()[1]/gb)
-                    memUsed = int(psutil.virtual_memory()[3]/gb)
+                    print(time.time())
+                    m = psutil.virtual_memory()
+                    print(time.time())
+                    memTotal = int(m[0]/gb)
+                    memFree = int(m[1]/gb)
+                    memUsed = int(m[3]/gb)
+                    print(time.time())
                     memPercent = int(memUsed/memTotal*100)
-                    storageTotal = int(psutil.disk_usage('/')[0]/gb)
-                    storageUsed = int(psutil.disk_usage('/')[1]/gb)
-                    storageFree = int(psutil.disk_usage('/')[2]/gb)
-                    storagePercent = int(storageUsed/storageTotal*100)
-                    info = cpuinfo.get_cpu_info()['brand_raw']
+                    # storageTotal = int(psutil.disk_usage('/')[0]/gb)
+                    # storageUsed = int(psutil.disk_usage('/')[1]/gb)
+                    # storageFree = int(psutil.disk_usage('/')[2]/gb)
+                    # storagePercent = int(storageUsed/storageTotal*100)
+                    print(time.time())
+                    # info = cpuinfo.get_cpu_info()['brand_raw']
+                    print(time.time())
                     core = os.cpu_count()
+                    print(time.time())
+                    CPU_percent = psutil.cpu_percent(1)
                     host = socket.gethostname()
+                    print(time.time())
                     speed = psutil.net_io_counters(pernic=False)
+                    print(time.time())
 
                     psend = round(speed[2]/kb, 2)
                     precv = round(speed[3]/kb, 2)
+                    print(time.time())
                     client.send((f"HTTP/1.1 200 OK\nContent-Type: application/json\nAccess-Control-Allow-Origin: *\n\r\n\r\n"+json.dumps({
                             'targets':targets,
                             'host':host,
@@ -356,31 +367,31 @@ while True:
                             'peers':peers,
                             'collection_files': collection_files,
 
-                            "proc_total" : len(psutil.pids()),
-                            "load_avg_unit": "minutes",
-                            "load_avg_1": round(psutil.getloadavg()[0],2),
-                            "load_avg_5": round(psutil.getloadavg()[1],2),
-                            "load_avg_15": round(psutil.getloadavg()[2],2),
+                            # "proc_total" : len(psutil.pids()),
+                            # "load_avg_unit": "minutes",
+                            # "load_avg_1": round(psutil.getloadavg()[0],2),
+                            # "load_avg_5": round(psutil.getloadavg()[1],2),
+                            # "load_avg_15": round(psutil.getloadavg()[2],2),
 
                             # ---------- System Info ----------
-                            "hostname":host,
-                            "system":  platform.system(),
-                            "machine": platform.machine(),
-                            "kernel":  platform.release(),
-                            "compiler":platform.python_compiler(),
-                            "CPU":     info, 
+                            # "hostname":host,
+                            # "system":  platform.system(),
+                            # "machine": platform.machine(),
+                            # "kernel":  platform.release(),
+                            # "compiler":platform.python_compiler(),
+                            # "CPU":     info, 
                             "CPU_core":core, #"(Core)")
                             "memory":   memTotal,
-                            "disk":     storageTotal,
+                            # "disk":     storageTotal,
 
-                            "CPU_percent": psutil.cpu_percent(1),
+                            "CPU_percent": CPU_percent,
                             # unit = GiB
                             "RAM_used": memUsed,
                             "RAM_total": memTotal,
                             "RAM_percent": memPercent,
-                            "disk_used": storageUsed,
-                            "disk_total": storageTotal,
-                            "disk_percent": storagePercent,
+                            # "disk_used": storageUsed,
+                            # "disk_total": storageTotal,
+                            # "disk_percent": storagePercent,
 
                             #     active = netifaces.gateways()['default'][netifaces.AF_INET][1]
                             "sent" : speed[0],
@@ -389,8 +400,11 @@ while True:
                             "packet_receive"   : precv,
                             # "KiB/s")
                         })).encode())
+                    print(time.time())
                     client.close()
+                    print(time.time())
                     inputs.remove(client)
+                    print(time.time())
                 else:
                     client.send((f"HTTP/1.1 200 OK\nContent-Type: application/json\nAccess-Control-Allow-Origin: *\n\r\n\r\n"+json.dumps({
                             'torrents':qb.torrents(),
