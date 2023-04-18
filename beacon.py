@@ -152,7 +152,10 @@ while True:
         if now - peer['time'] > PEER_OFFLINE_TIME: # remove those who have not sent FLOOD messages
             print('-',peer, peers)
             peers.remove(peer)
-        elif peer['host'] == host and peer['port'] == port: # remove self from peer list
+        # elif peer['host'] == host and peer['port'] == port: # remove self from peer list
+        #     peers.remove(peer)
+    for peer in peers:
+        if peer['port'] == port: # remove self from peer list
             peers.remove(peer)
 
     # Flood messages on Regular interval
@@ -340,6 +343,9 @@ while True:
                     core = os.cpu_count()
                     host = socket.gethostname()
                     speed = psutil.net_io_counters(pernic=False)
+
+                    psend = round(speed[2]/kb, 2)
+                    precv = round(speed[3]/kb, 2)
                     client.send((f"HTTP/1.1 200 OK\nContent-Type: application/json\nAccess-Control-Allow-Origin: *\n\r\n\r\n"+json.dumps({
                             'targets':targets,
                             'host':host,
@@ -376,10 +382,7 @@ while True:
                             "disk_percent": storagePercent,
 
                             #     active = netifaces.gateways()['default'][netifaces.AF_INET][1]
-                            "speed" : psutil.net_io_counters(pernic=False),
                             "sent" : speed[0],
-                            "psend" : round(speed[2]/kb, 2),
-                            "precv" : round(speed[3]/kb, 2),
 
                             "packet_send"      : psend,
                             "packet_receive"   : precv,
