@@ -339,6 +339,7 @@ while True:
                     info = cpuinfo.get_cpu_info()['brand_raw']
                     core = os.cpu_count()
                     host = socket.gethostname()
+                    speed = psutil.net_io_counters(pernic=False)
                     client.send((f"HTTP/1.1 200 OK\nContent-Type: application/json\nAccess-Control-Allow-Origin: *\n\r\n\r\n"+json.dumps({
                             'targets':targets,
                             'host':host,
