@@ -6,8 +6,7 @@ import os, platform, subprocess, psutil, cpuinfo#netifaces
 
 # import stun
 # nat_type, external_ip, external_port = stun.get_ip_info()
-# print(nat_type, external_ip, external_port)
-
+# #print(nat_type, external_ip, external_port)
 
 qb = Client("http://127.0.0.1:5555/")
 
@@ -48,8 +47,8 @@ class Torrent:
 
     def download(path): # path of collection file
         # send api request to download torrent
-        print("downloading",path)
-        qb.download_from_file(open(DIR+path, "rb"), savepath=DIR)
+        ## #print("downloading",path)
+        ## qb.download_from_file(open(DIR+path, "rb"), savepath=DIR)
         # qb.download_from_link(magnet_link)
         pass
 
@@ -67,7 +66,7 @@ class Torrent:
 
 WEBSITE_PORT = 9000
 FLOOD_TIMER = 3 #28 # not 30 because 30*2=60 by that time peers already assume us offline
-PEER_OFFLINE_TIME = 50 #60
+PEER_OFFLINE_TIME = 20 #60
 CONCENSUS_INTERVAL = 15 #600
 SYNC_INTERVAL = 12 #60
 
@@ -93,19 +92,19 @@ sock.bind((host, port))
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 sock2 = socket.socket()
 inputs = [sock]
-print('Listening on udp %s:%s' % (host, port))
-# print(host,port)
+print ('Listening on udp %s:%s' % (host, port))
+# #print(host,port)
 
 try:
     sock2.bind((host, WEBSITE_PORT))
     sock2.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock2.listen(5)
-    print('Listening on tcp %s:%s' % (host, WEBSITE_PORT))
+    #print('Listening on tcp %s:%s' % (host, WEBSITE_PORT))
     inputs.append(sock2)
 except:
-    print(f"WEBSITE_PORT:{WEBSITE_PORT} is not available")
+    print (f"WEBSITE_PORT:{WEBSITE_PORT} is not available")
     
-# print(1,host,port)
+# #print(1,host,port)
 
 # # get external ip address
 # try:
@@ -114,13 +113,13 @@ except:
 #     s.connect(("8.8.8.8", 80))
 #     host = s.getsockname()[0]
 #     s.close()
-#     print(2,host,port)
+#     #print(2,host,port)
 
 # except:
 #     host = socket.gethostbyname((socket.gethostname()))
-#     print(4,host,port)
+#     #print(4,host,port)
 
-# print(5,host,port)
+# #print(5,host,port)
 
 # "type" deprecated everyone is beacon
 peers = [
@@ -142,22 +141,24 @@ name = f'{str(port)} here!'
 collections = [{"id":1, "files":[1,2,3,4,5]}]
 
 
-# print(host,port)
+# #print(host,port)
 # Main Loop
 while True:
+
+    #print("A1",time.time())
     now = int(time.time())
     # time.sleep(0.1)
-    # print(peers)
+    # #print(peers)
     # Clean up peers
     for peer in peers:
         if now - peer['time'] > PEER_OFFLINE_TIME: # remove those who have not sent FLOOD messages
-            print('-',peer, peers)
+            #print('-',peer, peers)
             peers.remove(peer)
-        # elif peer['host'] == host and peer['port'] == port: # remove self from peer list
-        #     peers.remove(peer)
-    for peer in peers:
-        if peer['port'] == port: # remove self from peer list
+        elif peer['host'] == host and peer['port'] == port: # remove self from peer list
             peers.remove(peer)
+    # for peer in peers:
+    #     if peer['port'] == port: # remove self from peer list
+    #         peers.remove(peer)
 
     # Flood messages on Regular interval
     if now - last_flood_time > FLOOD_TIMER: 
@@ -170,14 +171,14 @@ while True:
                     'id': str(uuid.uuid4()),
                     'name': name
                     }).encode(), (peer['host'],peer['port']))
-                print("sent FLOOD to", host, port)
+                #print("sent FLOOD to", host, port)
             except:
                 print("Unable to reach peer: ", peer)
         last_flood_time = now
 
     # getting beacon stats
     if now - last_sync_time > SYNC_INTERVAL:
-        # print(targets)
+        # #print(targets)
         for collection in targets:
             Torrent.download(targets[collection][0])
         for peer in peers:
@@ -191,7 +192,7 @@ while True:
         last_sync_time = now
 
     # Setting the target
-    # print("stats",stats)
+    # #print("stats",stats)
     t_stats = {}
     for addr in stats:
         s = stats[addr]
@@ -202,24 +203,24 @@ while True:
             else:
                 t_stats[t_id] = s[t_id]
     c_stats = {}
-    # print(">", t_stats)
+    # #print(">", t_stats)
     for t_id in t_stats:
         counter = {}
         x= t_stats[t_id]
-        # print(x)
+        # #print(x)
         for name,status,infohash in x:
     #         i = str(i)
             if name not in counter:
-    #             print(0,name)
+    #             #print(0,name)
                 counter[name] = 0
             if status:
-    #             print("aa")
+    #             #print("aa")
                 counter[name] += 1
-    #             print(counter)
+    #             #print(counter)
         c_stats[t_id] = counter
-    #     print(counter)
+    #     #print(counter)
         
-    # print(c_stats)
+    # #print(c_stats)
 
     targets = {}
     for c_stat in c_stats:
@@ -235,14 +236,14 @@ while True:
     #     _collections = stat
     #     for _collection_id in _collections:
     #         _collection = _collections[_collection_id]
-    #         print("..", _collections)
+    #         #print("..", _collections)
     #         for t_id in _collections:
     #             t_stat = _collections[t_id] 
     #             if t_id in t_stats:
 
     #             t_stats['t_id']
 
-    #     print(">>>",addr, stat)
+    #     #print(">>>",addr, stat)
 
     # Checking the pending process by checking torrent's completion progress
 
@@ -255,27 +256,32 @@ while True:
     #                 'type': 'CONSENSUS'
     #                 }).encode(), (peer['host'],peer['port']))
     #         except:
-    #             print("Unable to reach peer: ", peer)
+    #             #print("Unable to reach peer: ", peer)
 
 
     # getting pending torrents 
 
 
     # handling socket request
+
+    #print("A7",time.time())
     read_sockets, write_sockets, error_sockets = select.select( inputs, inputs, [], 5)
+    #print("A8",time.time())
     for client in read_sockets:
 
+        #print("B1",time.time())
         # browser request
         if client.getsockname()[1] == WEBSITE_PORT:
+            #print("M",time.time())
             if client is sock2:  # New Connection
                 clientsock, clientaddr = client.accept()
                 inputs.append(clientsock)
             else:  # Existing Connection
-                # print('Got request on', WEBSITE_PORT, 'from client:', client.getpeername())
+                # #print('Got request on', WEBSITE_PORT, 'from client:', client.getpeername())
                 data = client.recv(1024)
-                # print("CLIENT DATA", list(str(data[:6])), data)
+                # #print("CLIENT DATA", list(str(data[:6])), data)
                 url = data.decode()[4:].split(" ")[0]
-                print(url)
+                #print(url)
                 if url == "/":
                     peers_table = "<thead><td>Who<td>Where<td>last_ping</thead>"
                     for peer in peers:
@@ -297,7 +303,7 @@ while True:
                             s = stat[id]
                             stats_table += f"<tr><td>{id}</td><td>{s}</td><tr>"
                         all_stats += f'<h4>{addr}</h4><table border="1">{stats_table}</table>'
-                        # print('>',stat)
+                        # #print('>',stat)
                     # send HTTP response to the browser
                     client.send(f"""HTTP/1.1 200 OK\nContent-Type: html\n\r\n\r\n
                             <head><meta http-equiv="refresh" content="3"></head>
@@ -319,7 +325,7 @@ while True:
                     client.close()
                     inputs.remove(client)
                 elif url == "/api2":
-                    print("<<><><><>>",stats)
+                    #print("<<><><><>>",stats)
                     st=[]
                     for addr in stats:
                         stat = stats[addr]
@@ -332,32 +338,31 @@ while True:
                     mb = float(kb ** 2)
                     gb = float(kb ** 3)
 
-                    print(time.time())
+                    #print(11,time.time())
                     m = psutil.virtual_memory()
-                    print(time.time())
+                    #print(11.1,time.time())
                     memTotal = int(m[0]/gb)
                     memFree = int(m[1]/gb)
                     memUsed = int(m[3]/gb)
-                    print(time.time())
+                    #print(11.2,time.time())
                     memPercent = int(memUsed/memTotal*100)
+                    #print(11.3,time.time())
                     # storageTotal = int(psutil.disk_usage('/')[0]/gb)
                     # storageUsed = int(psutil.disk_usage('/')[1]/gb)
                     # storageFree = int(psutil.disk_usage('/')[2]/gb)
                     # storagePercent = int(storageUsed/storageTotal*100)
-                    print(time.time())
                     # info = cpuinfo.get_cpu_info()['brand_raw']
-                    print(time.time())
                     core = os.cpu_count()
-                    print(time.time())
-                    CPU_percent = psutil.cpu_percent(1)
-                    host = socket.gethostname()
-                    print(time.time())
+                    #print(11.4,time.time())
+                    CPU_percent = psutil.cpu_percent(0.05)
+                    #print(11.5,time.time())
+                    # host = socket.gethostname()
                     speed = psutil.net_io_counters(pernic=False)
-                    print(time.time())
+                    #print(11.6,time.time())
 
                     psend = round(speed[2]/kb, 2)
                     precv = round(speed[3]/kb, 2)
-                    print(time.time())
+                    #print(12,time.time())
                     client.send((f"HTTP/1.1 200 OK\nContent-Type: application/json\nAccess-Control-Allow-Origin: *\n\r\n\r\n"+json.dumps({
                             'targets':targets,
                             'host':host,
@@ -400,11 +405,11 @@ while True:
                             "packet_receive"   : precv,
                             # "KiB/s")
                         })).encode())
-                    print(time.time())
+                    #print(13,time.time())
                     client.close()
-                    print(time.time())
+                    #print(14,time.time())
                     inputs.remove(client)
-                    print(time.time())
+                    #print(15,time.time())
                 else:
                     client.send((f"HTTP/1.1 200 OK\nContent-Type: application/json\nAccess-Control-Allow-Origin: *\n\r\n\r\n"+json.dumps({
                             'torrents':qb.torrents(),
@@ -421,17 +426,18 @@ while True:
 
         # udp beacon/peer request
         else:
+            #print("N",time.time())
             try:
                 data, addr = client.recvfrom(5*1024)
             except:
                 continue
-            print('recv %r - %r\n\n' % addr, data)
+            print ('recv %r - %r\n\n' % addr, data)
             req = json.loads(data.decode())
 
             if req['type'] == 'FLOOD':
                 addr_req = (str(req['host'])), int(req['port'])
                 for peer in peers:
-                    # print("peer",peer)
+                    # #print("peer",peer)
                     if peer['host'] == req['host'] and peer['port'] == peer['port']: # old peer
                         peer['time'] = time.time()  # update time for clean up timeout
                         break
@@ -500,3 +506,6 @@ while True:
                         Blockcollection_buffer.append({'block':block, 'time':now})
 
 
+        #print("B9",time.time())
+
+    #print("A9",time.time())
