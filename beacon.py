@@ -1,15 +1,15 @@
-import socket, json, time, select, sys, uuid, hashlib, random
+import socket, json, time, select, sys, uuid, hashlib, bencoding, binascii, random, os, platform, subprocess, psutil, cpuinfo  # ,netifaces
 from qbittorrent import Client
-import bencoding, binascii, hashlib
 from io import BytesIO
-import os, platform, subprocess, psutil, cpuinfo#netifaces
 
 # import stun
 # nat_type, external_ip, external_port = stun.get_ip_info()
 # #print(nat_type, external_ip, external_port)
-
-qb = Client("http://127.0.0.1:5555/")
-
+try:
+    qb = Client("http://127.0.0.1:5555/")
+except:
+    print("Error: can't connect to qbittorrent app")
+    exit()
 torrents = {}  # torrents for each collection, like collection_id: [(torrent_file_name, download_status, infohash)]
 
 # DIR = "../collection_files/"
@@ -65,7 +65,7 @@ class Torrent:
 
 
 WEBSITE_PORT = 9000
-FLOOD_TIMER = 3 #28 # not 30 because 30*2=60 by that time peers already assume us offline
+FLOOD_TIMER = 5 #28 # not 30 because 30*2=60 by that time peers already assume us offline
 PEER_OFFLINE_TIME = 20 #60
 CONCENSUS_INTERVAL = 15 #600
 SYNC_INTERVAL = 12 #60
@@ -228,6 +228,9 @@ while True:
         len(sorted_stats)
         if sorted_stats[0][1] > 3:
             continue
+        # for stat in sorted_stats:
+
+
         targets[c_stat] = sorted_stats[0]
 
     # for addr in stats:
