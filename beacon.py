@@ -225,13 +225,15 @@ while True:
     targets = {}
     for c_stat in c_stats:
         sorted_stats = sorted(c_stats[c_stat].items(), key=lambda x:x[1])
-        len(sorted_stats)
+        # print(sorted_stats)
         if sorted_stats[0][1] > 3:
             continue
-        # for stat in sorted_stats:
+        for stat in sorted_stats:
 
 
-        targets[c_stat] = sorted_stats[0]
+
+
+        # targets[c_stat] = sorted_stats[0]
 
     # for addr in stats:
     #     t_stats = {}
@@ -407,14 +409,6 @@ while True:
                             "packet_send"      : psend,
                             "packet_receive"   : precv,
                             # "KiB/s")
-                        })).encode())
-                    #print(13,time.time())
-                    client.close()
-                    #print(14,time.time())
-                    inputs.remove(client)
-                    #print(15,time.time())
-                else:
-                    client.send((f"HTTP/1.1 200 OK\nContent-Type: application/json\nAccess-Control-Allow-Origin: *\n\r\n\r\n"+json.dumps({
                             'torrents':qb.torrents(),
                             # 'stats':stats,
                             'c_stats':c_stats,
