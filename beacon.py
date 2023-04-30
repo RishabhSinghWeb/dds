@@ -11,7 +11,8 @@ except:
     print("Error: can't connect to qbittorrent app")
     exit()
 torrents = {}  # torrents for each collection, like collection_id: [(torrent_file_name, download_status, infohash)]
-
+hashes = {}
+targets = {}
 # DIR = "../collection_files/"
 DIR = "D:/collection_files/"
 collection_files = ["aa.collection", "bb.collection"]
@@ -27,9 +28,11 @@ for collection in collection_files:
                     with open(DIR+torrent_file_name, "rb") as f:
                         data = bencoding.bdecode(f.read())
                     infohash = hashlib.sha1(bencoding.bencode(data[b'info'])).hexdigest()
+                    hashes[torrent_file_name] = infohash
+                    torrent_files.append((torrent_file_name,False,infohash))  
                 except:
                     infohash = None
-                torrent_files.append((torrent_file_name,False,infohash))  
+                    print("Error can't get hash of", torrent_file_name)
             torrents[j['id']] = torrent_files
     except:
         print("can't open", path)
@@ -45,11 +48,21 @@ class Torrent:
     #     # create new torrent
     #     pass
 
-    def download(path): # path of collection file
+    def download(torrent): # path of collection file
         # send api request to download torrent
         ## #print("downloading",path)
-        ## qb.download_from_file(open(DIR+path, "rb"), savepath=DIR)
-        # qb.download_from_link(magnet_link)
+        download_exists = False
+        # for torrent in qb.torrents():
+        #     if torrent['hash'] == hashes[torrent]:
+        #         download_exists = True
+        #         break
+        if download_exists:
+            # resume
+            # torrent.resume
+            pass
+        else:
+            qb.download_from_file(open(DIR+torrent, "rb"), savepath=DIR)
+            # qb.download_from_link(magnet_link)
         pass
 
     # def status(): # isDownloading or isDownloaded
@@ -59,7 +72,7 @@ class Torrent:
         # stop torrenting
         # delete files
         # delete torrent
-        qb.delete(torrent["infohash_v1"])
+        qb.delete(hashes[path])
         pass
 
 
@@ -140,7 +153,6 @@ name = f'{str(port)} here!'
 
 collections = [{"id":1, "files":[1,2,3,4,5]}]
 
-
 # #print(host,port)
 # Main Loop
 while True:
@@ -160,8 +172,40 @@ while True:
     #     if peer['port'] == port: # remove self from peer list
     #         peers.remove(peer)
 
+    # getting beacon stats
+    if now - last_sync_time > SYNC_INTERVAL:
+        for peer in peers:
+            try:
+                addr_req = (peer['host'], peer['port'])
+                sock.sendto(json.dumps({
+                        "type": "STATS"
+                    }).encode(), addr_req)
+            except:
+                print("Unable to reach peer: ", peer)
+        last_sync_time = now
+
+
+
     # Flood messages on Regular interval
     if now - last_flood_time > FLOOD_TIMER: 
+        # # update own data before flood
+        for torrent in qb.torrents():
+            if torrent['state'] == "pausedUP" or torrent['state'] == "forcedUP" :
+                for collection in torrents:
+                    for t in torrents[collection]:
+                        # print(">",t,torrent['hash'])
+                        if t[2] == torrent['hash']:
+                            tt = (t[0], True, t[2])
+                            torrents[collection].remove(t)
+                            torrents[collection].append(tt)
+                            # print((str(t[2])+'\n')*10)
+
+        # #print(targets)
+        for collection in targets:
+            Torrent.download(targets[collection][0])
+
+        
+        # flood all peers
         for peer in peers: # sent to all peers
             try:
                 sock.sendto(json.dumps({
@@ -176,20 +220,6 @@ while True:
                 print("Unable to reach peer: ", peer)
         last_flood_time = now
 
-    # getting beacon stats
-    if now - last_sync_time > SYNC_INTERVAL:
-        # #print(targets)
-        for collection in targets:
-            Torrent.download(targets[collection][0])
-        for peer in peers:
-            try:
-                addr_req = (peer['host'], peer['port'])
-                sock.sendto(json.dumps({
-                        "type": "STATS"
-                    }).encode(), addr_req)
-            except:
-                print("Unable to reach peer: ", peer)
-        last_sync_time = now
 
     # Setting the target
     # #print("stats",stats)
@@ -222,18 +252,26 @@ while True:
         
     # #print(c_stats)
 
+
+    
     targets = {}
     for c_stat in c_stats:
         sorted_stats = sorted(c_stats[c_stat].items(), key=lambda x:x[1])
         # print(sorted_stats)
         if sorted_stats[0][1] > 3:
             continue
-        for stat in sorted_stats:
+        # for stat in sorted_stats:
+
+        targets[c_stat] = sorted_stats[0]
 
 
-
-
-        # targets[c_stat] = sorted_stats[0]
+    # targets = {}
+    # for c_stat in c_stats:
+    #     sorted_stats = sorted(c_stats[c_stat].items(), key=lambda x:x[1])
+    #     # print(sorted_stats)
+    #     if sorted_stats[0][1] > 3:
+    #         continue
+    #     targets[c_stat] = sorted_stats[0]
 
     # for addr in stats:
     #     t_stats = {}
@@ -329,7 +367,7 @@ while True:
                         """.encode())
                     client.close()
                     inputs.remove(client)
-                elif url == "/api2":
+                else:
                     #print("<<><><><>>",stats)
                     st=[]
                     for addr in stats:
